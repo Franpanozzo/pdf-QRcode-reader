@@ -3,7 +3,7 @@ const { PNG } = require('pngjs');
 const jsQR = require('jsqr');
 const path = require('path');
 
-const FILE = 'sample.pdf';
+const FILE = 'sample3.pdf';
 
 const pdfFilePath = path.resolve(path.join(__dirname ,`/data/${FILE}`));
 
@@ -24,6 +24,7 @@ async function readQrFromPdf(pdfFile) {
     const stringCodigoQR = readQr(base64Response?.base64);
     if(stringCodigoQR) finalQrTexts.push(stringCodigoQR);
   });
+
   return finalQrTexts;
 }
 
@@ -34,9 +35,6 @@ function readQr(dataUri) {
   const code = jsQR(Uint8ClampedArray.from(png.data), png.width, png.height);
   const qrCodeText = code?.data;
 
-  // if(qrCodeText){
-  //   console.log('QR Code Text:', qrCodeText);
-  // }
   return qrCodeText;
 }
 
@@ -44,6 +42,8 @@ async function main() {
   const algo = await readQrFromPdf(pdfFilePath);
   console.log('QR codes:', algo);
 }
+
+main();
 
 module.exports = {
   readQrFromPdf
