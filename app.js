@@ -2,7 +2,7 @@ const jimp = require("jimp");
 const fs = require('fs')
 const qrCode = require('qrcode-reader');
 
-var buffer = fs.readFileSync(__dirname + '/data/Captura3.png');
+var buffer = fs.readFileSync(__dirname + '/data/Captura2.png');
 
 function readQrFromImage() {
   jimp.read(buffer, (err, image) => {
