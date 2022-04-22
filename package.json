@@ -18,11 +18,13 @@
   },
   "homepage": "https://github.com/Franpanozzo/pdf-QRcode-reader#readme",
   "dependencies": {
+    "gm": "^1.23.1",
     "jimp": "^0.16.1",
     "jsqr": "^1.4.0",
     "pdf2pic": "^2.1.4",
     "pngjs": "^6.0.0",
-    "qrcode-reader": "^1.0.4"
+    "qrcode-reader": "^1.0.4",
+    "gs": "https://github.com/sina-masnadi/node-gs/tarball/master"
   },
   "devDependencies": {
     "jest": "^27.5.1"

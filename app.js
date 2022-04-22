@@ -3,7 +3,7 @@ const { PNG } = require('pngjs');
 const jsQR = require('jsqr');
 const path = require('path');
 
-const FILE = 'sample3.pdf';
+const FILE = 'sample.pdf';
 
 const pdfFilePath = path.resolve(path.join(__dirname ,`/data/${FILE}`));
 
