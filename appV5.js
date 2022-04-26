@@ -1,13 +1,14 @@
 const gs = require('gs');
 const path = require('path');
-const jimp = require("jimp");
 const fs = require('fs')
-const qrCode = require('qrcode-reader');
+const { PNG } = require('pngjs');
+const jsQR = require('jsqr');
 
-const PDF_NAME = 'sample';
+const PDF_NAME = 'sample2';
+const GS_PATH = 'functions/lambda-gs-win/bin/./gswin64.exe';
 
 const pdfFilePath = path.resolve(path.join(__dirname ,'data',`${PDF_NAME}.pdf`));
-const imagePath = path.resolve(path.join(__dirname ,'data',`${PDF_NAME}.png`));
+const imagePathMultiPage = path.resolve(path.join(__dirname ,'data',`${PDF_NAME}-%03d.png`));
 
 async function convertPdfToImage() {
   return new Promise((resolve, reject) => {
@@ -16,15 +17,15 @@ async function convertPdfToImage() {
       .nopause()
       .q()
       .device('png16m')
-      .executablePath('functions/lambda-gs-win/bin/./gswin64.exe')
-      .output(imagePath)
+      .executablePath(GS_PATH)
+      .output(imagePathMultiPage)
       .input(pdfFilePath)
       .exec((err, stdout, stderr) => {
         if (!err) {
-          console.log('gs executed w/o error')
+          console.log('GS executed successfully!')
           // console.log('stdout', stdout)
           // console.log('stderr', stderr)
-          resolve(imagePath)
+          resolve(imagePathMultiPage)
         } else {
           console.log('gs error:', err)
           reject(err)
@@ -33,31 +34,32 @@ async function convertPdfToImage() {
   })
 }
 
-function readQrFromImage(image) {
-  jimp.read(image, (err, image) => {
-    if(err) {
-      return console.error(err);
+function readQrFromImage() {
+  let pageIterator = 1;
+  let qrCodeText = undefined;
+
+  try {
+    while(1) {
+      const buffer = fs.readFileSync(path.resolve(path.join(__dirname,'data',`${PDF_NAME}-00${pageIterator}.png`)))
+      const png = PNG.sync.read(buffer);
+      const code = jsQR(Uint8ClampedArray.from(png.data), png.width, png.height);
+      qrCodeText = code?.data;
+      pageIterator++;
+      if(/afip/.test(qrCodeText)) break;
     }
-    let qrcode = new qrCode();
-  
-    qrcode.callback = (err, value) => {
-      if(err) {
-        return console.error(err);
-      }
-      console.log(`Codigo QR: ${value.result}`);
-    };
-  
-    qrcode.decode(image.bitmap);
-  });
+    console.log(`QR code in page ${pageIterator - 1} :`, qrCodeText);
+  } catch (err) {
+    console.log('The pdf has no AFIP QR code to read');
+  }
 }
 
 async function getQrFromPdf() {
   try {
     const image = await convertPdfToImage();
-    imageRead = fs.readFileSync(image);
-    readQrFromImage(imageRead);
+    // imageRead = fs.readFileSync(path.resolve(path.join(__dirname,'data','sample-001.png')));
+    readQrFromImage();
   } catch(err) {
-    console.log('Failed to convert PDF to image');
+    console.log('Failed to convert PDF to image -',err);
   }
 }
 
