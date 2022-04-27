@@ -4,19 +4,21 @@ const fs = require('fs')
 const { PNG } = require('pngjs');
 const jsQR = require('jsqr');
 
-const PDF_NAME = 'sample2';
+const PDF_NAME = 'sample7';
 const GS_PATH = 'functions/lambda-gs-win/bin/./gswin64.exe';
 
 const pdfFilePath = path.resolve(path.join(__dirname ,'data',`${PDF_NAME}.pdf`));
 const imagePathMultiPage = path.resolve(path.join(__dirname ,'data',`${PDF_NAME}-%03d.png`));
 
-async function convertPdfToImage() {
+async function convertPdfToImage(conf) {
   return new Promise((resolve, reject) => {
     gs()
       .batch()
       .nopause()
+      .option(`-r${conf.r}`)
+      .option(`-dDownScaleFactor=${conf.scaleFactor}`)
       .q()
-      .device('png16m')
+      .device('pnggray')
       .executablePath(GS_PATH)
       .output(imagePathMultiPage)
       .input(pdfFilePath)
@@ -45,23 +47,42 @@ function readQrFromImage() {
       const code = jsQR(Uint8ClampedArray.from(png.data), png.width, png.height);
       qrCodeText = code?.data;
       pageIterator++;
-      if(/afip/.test(qrCodeText)) break;
+      if(/afip/i.test(qrCodeText)) break;
     }
-    console.log(`QR code in page ${pageIterator - 1} :`, qrCodeText);
+    return qrCodeText;
   } catch (err) {
-    console.log('The pdf has no AFIP QR code to read');
+    return null;
   }
 }
 
-async function getQrFromPdf() {
+async function getQrFromPdf(config) {
   try {
-    const image = await convertPdfToImage();
-    // imageRead = fs.readFileSync(path.resolve(path.join(__dirname,'data','sample-001.png')));
-    readQrFromImage();
+    await convertPdfToImage(config);
+    return readQrFromImage();
   } catch(err) {
     console.log('Failed to convert PDF to image -',err);
+    return null;
   }
 }
 
-getQrFromPdf();
+async function performanceFunc() {
+  const configuration = [{r: 300, scaleFactor: 3}, {r: 600, scaleFactor: 2}, {r: 1200, scaleFactor: 3}];
+  let iterator = 0;
+  let qrCode = undefined, config;
+
+  while(config = configuration[iterator]) {
+    console.log(`GETTING QR CODE WITH - r:${config.r}, scaleFactor:${config.scaleFactor}`);
+    qrCode = await getQrFromPdf(config);
+    if(qrCode) break
+    iterator++;
+    if(!config) {
+      break;
+    }
+  }
+
+  if(qrCode) console.log('QR code:', qrCode);
+  else console.log('The pdf has no AFIP QR code to read');
+}
+
+performanceFunc();
   
